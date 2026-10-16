@@ -321,7 +321,32 @@ input:focus, textarea:focus, select:focus { border-color: var(--brass); }
   font-weight: 700;
 }
 .card.tapped { transform: rotate(90deg) scale(0.92); }
-.card.can { box-shadow: 0 0 0 2px var(--brass), 0 6px 14px rgba(0, 0, 0, 0.35); }
+.card.can {
+  box-shadow: 0 0 0 3px var(--brass), 0 0 16px rgba(212, 175, 98, 0.85);
+  animation: playable 1.3s ease-in-out infinite;
+}
+@keyframes playable {
+  50% { box-shadow: 0 0 0 3px #fff1c9, 0 0 18px rgba(212, 175, 98, 0.45); }
+}
+.play-chip {
+  position: absolute;
+  z-index: 3;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--brass);
+  color: #24180f;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+.dock .priority-row { flex-direction: column; }
+.dock .priority-row .btn { order: -1; }
 .card.picked { box-shadow: 0 0 0 3px #fff4, 0 0 0 6px var(--brass); }
 .card.attacking { box-shadow: 0 0 0 2px #e07a5f; }
 .card.back {

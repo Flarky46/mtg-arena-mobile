@@ -72,6 +72,18 @@ Tabletop is GPL-3.0-or-later because it links Forge, which is GPL-3.0. See `LICE
 
 Card images are fetched from Scryfall at runtime and are not part of this project. Forge's own download includes the card *scripts* the rules need. Those stay inside the engine image.
 
+## How to play a turn
+
+The table moves like Arena. Untap, upkeep, and draw pass by themselves when you have nothing that can be played there. It stops when a card, attack, or block is legal.
+
+- A card you can play glows, with **Play**, **Cast**, **Activate**, **Attack**, or **Block** on the card.
+- Tap that word to do it. Tap the rest of the card to see it large, with the same button.
+- Lands are **Play**. Other cards in hand are **Cast**. A permanent is **Activate**.
+- Mana taps itself. The button says **Auto-tap**. You can still tap a glowing land yourself before that happens.
+- **Pass** moves to the next step. **End Turn** gives the rest of the turn away. **Confirm attack** locks in attackers. **Attack with everything** swings with every creature that can.
+- Tap a glowing creature to assign it as an attacker or a blocker, then confirm.
+- If a spell or ability needs a choice, a sheet lists the options. Tap one.
+
 ## Limits, honestly
 
 - Odd prompts (ordering a library, splitting damage, "pick two") use a plain choice sheet. The common actions — play, tap, attack, block, pass priority, mulligan, stack — are on the table itself.
@@ -87,5 +99,5 @@ Card images are fetched from Scryfall at runtime and are not part of this projec
 - Sign-in, so a table survives a refresh on a new phone without the code being the only key.
 - Store rooms somewhere other than memory.
 - HTTPS in the compose file for people who already have a domain.
-- A tighter pass-priority control, and AI personalities picked from Forge's profiles.
+- AI personalities picked from Forge's profiles.
 - Sideboard and deck-editor screens. The engine can already tell which cards it does not know.

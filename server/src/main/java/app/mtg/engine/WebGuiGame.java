@@ -821,7 +821,12 @@ public final class WebGuiGame implements IGuiGame {
         if (player != null) players.put(player.getId(), player);
         publish();
     }
-    @Override public boolean isUiSetToSkipPhase(PlayerView playerTurn, PhaseType phase) { return false; }
+    @Override public boolean isUiSetToSkipPhase(PlayerView playerTurn, PhaseType phase) {
+        // Empty steps are passed by YIELD_AUTO_PASS_NO_ACTIONS, which still stops
+        // when the player has a legal spell, ability, or attack. A blind skip here
+        // would also skip an instant in upkeep or draw.
+        return false;
+    }
     @Override public void applyYieldUpdate(YieldUpdate update) { }
     @Override public boolean isNetGame() { return false; }
     @Override public void setNetGame() { }

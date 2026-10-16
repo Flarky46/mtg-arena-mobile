@@ -25,6 +25,7 @@
     amounts: {},
     inputText: "",
     lastAuto: "",
+    lastMana: "",
   };
 
   function esc(value) {
@@ -466,6 +467,7 @@
     paintDock(dock, s, you);
     paintSheets();
     maybeAutoPass(s);
+    maybeAutoMana(s);
   }
 
   function playerBlock(player, s, mine) {
@@ -481,8 +483,8 @@
         </button>
         ${dmg ? `<p class="cmd">Commander damage: ${dmg}</p>` : ""}
         ${manaHtml(player.mana)}
-        ${zoneLane(player.command, "command")}
-        <div class="lane ${mine ? "you-lane" : ""}" data-zone="board">${(player.battlefield || []).map((card) => cardHtml(card, s)).join("")}</div>
+        ${zoneLane(player.command, s, "command")}
+        <div class="lane ${mine ? "you-lane" : ""}" data-zone="board">${(player.battlefield || []).map((card) => cardHtml(card, s, "board")).join("")}</div>
       </section>`;
   }
 
@@ -493,23 +495,56 @@
     return bits ? `<div class="pips">${bits}</div>` : "";
   }
 
-  function zoneLane(cards, kind) {
+  function zoneLane(cards, s, kind) {
     if (!cards || !cards.length) return "";
-    return `<div class="lane">${cards.map((card) => cardHtml(card, stateBody(), kind)).join("")}</div>`;
+    return `<div class="lane">${cards.map((card) => cardHtml(card, s || stateBody(), kind)).join("")}</div>`;
   }
 
-  function cardHtml(card, s, kind) {
+  function zoneOf(id) {
+    const s = stateBody();
+    if (!s) return "";
+    for (const player of s.players || []) {
+      if ((player.handCards || []).some((card) => card.id === id)) return "hand";
+      if ((player.battlefield || []).some((card) => card.id === id)) return "board";
+      if ((player.command || []).some((card) => card.id === id)) return "command";
+      if ((player.graveyardCards || []).some((card) => card.id === id)) return "graveyard";
+      if ((player.exileCards || []).some((card) => card.id === id)) return "exile";
+    }
+    return "";
+  }
+
+  function actionVerb(card, s, zone) {
+    if (!card) return "";
     const prompt = (s && s.prompt) || {};
-    const can = (prompt.selectable || []).includes(card.id) || (prompt.weak || []).includes(card.id);
+    const weak = (prompt.weak || []).includes(card.id);
+    const selectable = (prompt.selectable || []).includes(card.id);
+    if (!weak && !selectable) return "";
+    if (selectable && !weak) return "Choose";
+    const where = zone || zoneOf(card.id);
+    const message = ((s && s.prompt) || {}).message || "";
+    const priority = /priority:/i.test(message);
+    if (!priority && s && s.phase === "COMBAT_DECLARE_ATTACKERS" && where === "board") return "Attack";
+    if (!priority && s && s.phase === "COMBAT_DECLARE_BLOCKERS" && where === "board") return "Block";
+    const type = (card.type || "").toLowerCase();
+    if (type.includes("land") && where !== "board") return "Play";
+    if (where === "board" || where === "command" || where === "graveyard" || where === "exile") return "Activate";
+    return "Cast";
+  }
+
+  function cardHtml(card, s, zone) {
+    const prompt = (s && s.prompt) || {};
+    const verb = actionVerb(card, s, zone);
+    const can = !!verb;
     const picked = (prompt.selected || []).includes(card.id);
     const classes = ["card", card.tapped ? "tapped" : "", can ? "can" : "", picked ? "picked" : "", card.attacking ? "attacking" : "", card.hidden ? "back" : ""].filter(Boolean).join(" ");
     const src = card.hidden ? "" : imgUrl(card.imageName || card.name);
     const pt = card.creature ? `${card.power}/${card.toughness}` : (card.loyalty != null ? String(card.loyalty) : "");
     return `<button type="button" class="${classes}" data-card="${card.id}" data-name="${esc(card.imageName || card.name || "")}">
+      ${verb ? `<span class="play-chip" data-play="${card.id}">${esc(verb)}</span>` : ""}
       ${src ? `<img alt="" src="${esc(src)}" data-fallback="${esc(card.name)}">` : ""}
       <span class="name">${esc(card.name || "Card")}</span>
       ${pt ? `<span class="pt">${esc(pt)}</span>` : ""}
-      ${card.commander || kind === "command" ? `<span class="star">C</span>` : ""}
+      ${card.commander || zone === "command" ? `<span class="star">C</span>` : ""}
     </button>`;
   }
 
@@ -533,7 +568,7 @@
     if (!container) return;
     const cards = you && you.handCards || [];
     const s = stateBody();
-    container.innerHTML = cards.map((card, index) => cardHtml(card, s)).join("");
+    container.innerHTML = cards.map((card) => cardHtml(card, s, "hand")).join("");
     const mid = (cards.length - 1) / 2;
     [...container.children].forEach((el, index) => {
       const rot = (index - mid) * 4;
@@ -543,16 +578,36 @@
     });
   }
 
+  function buttonLabels(prompt, s) {
+    const okRaw = (prompt.ok || "").trim();
+    const cancelRaw = (prompt.cancel || "").trim();
+    if (/^auto$/i.test(okRaw)) return { ok: "Auto-tap", cancel: cancelRaw || "Cancel", kind: "mana" };
+    if (/alpha strike|call back/i.test(cancelRaw)) return { ok: "Confirm attack", cancel: cancelRaw, kind: "attack" };
+    if ((/^ok$/i.test(okRaw) || okRaw === "") && /end turn|^undo/i.test(cancelRaw)) {
+      return { ok: "Pass", cancel: cancelRaw, kind: "priority" };
+    }
+    if (s && s.phase === "COMBAT_DECLARE_BLOCKERS" && /^ok$/i.test(okRaw || "OK")) {
+      return { ok: "Done blocking", cancel: cancelRaw || "Cancel", kind: "block" };
+    }
+    return { ok: okRaw || "OK", cancel: cancelRaw || "Cancel", kind: "" };
+  }
+
   function paintDock(dock, s, you) {
     const prompt = s.prompt || {};
+    const labels = buttonLabels(prompt, s);
     const attackers = s.phase === "COMBAT_DECLARE_ATTACKERS" && you && s.turnPlayer === you.id;
+    const playable = (prompt.weak || []).length;
+    const hint = playable
+      ? "Glowing cards are legal. Tap Play, Cast, or Activate on the card — or open it and use the same button."
+      : (labels.kind === "priority" ? "Nothing to play here. Pass moves to the next step. Empty upkeep and draw steps pass on their own." : "");
     dock.innerHTML = `
       <p class="prompt">${esc(prompt.message || (s.gameOver ? "Game over" : "Waiting…"))}</p>
-      <div class="row">
-        <button class="btn-ghost" id="act-cancel" type="button" ${prompt.cancelEnabled ? "" : "disabled"}>${esc(prompt.cancel || "Cancel")}</button>
-        <button class="btn" id="act-ok" type="button" ${prompt.okEnabled ? "" : "disabled"}>${esc(prompt.ok || "OK")}</button>
+      ${hint ? `<p class="hint">${esc(hint)}</p>` : ""}
+      <div class="row ${labels.kind === "priority" ? "priority-row" : ""}">
+        <button class="btn" id="act-ok" type="button" ${prompt.okEnabled ? "" : "disabled"}>${esc(labels.ok)}</button>
+        <button class="btn-ghost" id="act-cancel" type="button" ${prompt.cancelEnabled ? "" : "disabled"}>${esc(labels.cancel)}</button>
       </div>
-      ${attackers ? `<button class="btn-ghost" id="act-alpha" type="button">Attack with everything</button>` : ""}
+      ${attackers ? `<button class="btn" id="act-alpha" type="button">Attack with everything</button>` : ""}
       <div class="row">
         <button class="btn-ghost" id="open-gy" type="button">Graveyard</button>
         <button class="btn-ghost" id="open-log" type="button">Log</button>
@@ -565,18 +620,44 @@
     document.getElementById("open-log").addEventListener("click", () => { ui.logOpen = true; paintSheets(); });
   }
 
+  function playCard(id) {
+    send({ action: "card", cardId: id });
+    ui.inspect = null;
+    paintSheets();
+  }
+
+  function onCardTap(id) {
+    const s = stateBody();
+    const card = findCard(id);
+    const verb = actionVerb(card, s);
+    if (!verb) {
+      ui.inspect = card;
+      paintSheets();
+      return;
+    }
+    // Choosing, attacking, and blocking toggle immediately. Spells and lands
+    // open the card so Play / Cast is an explicit button, and the chip plays at once.
+    if (verb === "Choose" || verb === "Attack" || verb === "Block") {
+      playCard(id);
+      return;
+    }
+    ui.inspect = card;
+    paintSheets();
+  }
+
   function onFeltClick(event) {
     const img = event.target.closest("img[data-fallback]");
     if (img && event.type === "error") return;
+    const play = event.target.closest("[data-play]");
+    if (play) {
+      event.preventDefault();
+      event.stopPropagation();
+      playCard(Number(play.dataset.play));
+      return;
+    }
     const cardBtn = event.target.closest("[data-card]");
     if (cardBtn) {
-      const id = Number(cardBtn.dataset.card);
-      const s = stateBody();
-      const prompt = (s && s.prompt) || {};
-      const can = (prompt.selectable || []).includes(id) || (prompt.weak || []).includes(id);
-      if (can) send({ action: "card", cardId: id });
-      else ui.inspect = findCard(id);
-      paintSheets();
+      onCardTap(Number(cardBtn.dataset.card));
       return;
     }
     const playerBtn = event.target.closest("[data-player]");
@@ -655,11 +736,18 @@
 
   function inspectSheet(card) {
     const src = card.hidden ? "" : imgUrl(card.imageName || card.name);
+    const s = stateBody();
+    const verb = actionVerb(card, s);
+    const cost = card.cost && card.cost !== "no cost" ? "· " + card.cost : (verb === "Play" ? "· no cost" : "");
+    const play = verb
+      ? `<button class="btn" type="button" data-play="${card.id}">${esc(verb)}</button>`
+      : "";
     return `<div class="overlay" data-close="inspect"><article>
       ${src ? `<img class="inspect-card" alt="${esc(card.name)}" src="${esc(src)}">` : `<div class="card back" style="width:180px;height:250px;margin:0 auto 10px"></div>`}
       <h2>${esc(card.name)}</h2>
-      <p class="hint">${esc(card.type || "")} ${card.cost ? "· " + esc(card.cost) : ""}</p>
-      <button class="btn" type="button" data-close="inspect">Close</button>
+      <p class="hint">${esc(card.type || "")} ${esc(cost)}</p>
+      ${play}
+      <button class="${verb ? "btn-ghost" : "btn"}" type="button" data-close="inspect">Close</button>
     </article></div>`;
   }
 
@@ -669,7 +757,7 @@
     const cards = you ? (ui.zone === "exile" ? you.exileCards : you.graveyardCards) || [] : [];
     return `<div class="sheet"><article>
       <h2>${ui.zone === "exile" ? "Exile" : "Graveyard"}</h2>
-      <div class="lane">${cards.map((card) => cardHtml(card, s)).join("") || `<p class="hint">Empty.</p>`}</div>
+      <div class="lane">${cards.map((card) => cardHtml(card, s, ui.zone)).join("") || `<p class="hint">Empty.</p>`}</div>
       <button class="btn-ghost" type="button" data-zone-switch="exile">Exile</button>
       <button class="btn" type="button" data-close="zone">Close</button>
     </article></div>`;
@@ -682,7 +770,8 @@
 
   function menuSheet() {
     return `<div class="sheet"><article class="menu"><h2>Table</h2>
-      <label class="check"><input id="autopass" type="checkbox" ${ui.autoPass ? "checked" : ""}> Auto-pass priority</label>
+      <label class="check"><input id="autopass" type="checkbox" ${ui.autoPass ? "checked" : ""}> Also pass when I could still act</label>
+      <p class="hint">Empty steps already pass on their own. Turn this on to pass even when a card is glowing.</p>
       <button class="btn-danger" id="concede" type="button">Concede</button>
       <button class="btn" type="button" data-close="menu">Close</button>
     </article></div>`;
@@ -724,9 +813,14 @@
     if (leave) leave.addEventListener("click", () => { sessionStorage.removeItem("tt-room"); show("home"); });
     const exile = root.querySelector("[data-zone-switch]");
     if (exile) exile.addEventListener("click", () => { ui.zone = ui.zone === "exile" ? "graveyard" : "exile"; paintSheets(); });
-    root.querySelectorAll("[data-card]").forEach((btn) => btn.addEventListener("click", () => {
-      ui.inspect = findCard(Number(btn.dataset.card));
-      paintSheets();
+    root.querySelectorAll("[data-play]").forEach((btn) => btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      playCard(Number(btn.dataset.play));
+    }));
+    root.querySelectorAll("[data-card]").forEach((btn) => btn.addEventListener("click", (event) => {
+      if (event.target.closest("[data-play]")) return;
+      onCardTap(Number(btn.dataset.card));
     }));
     root.querySelectorAll("img").forEach((img) => {
       img.addEventListener("error", () => { img.style.display = "none"; });
@@ -763,14 +857,30 @@
   function maybeAutoPass(s) {
     if (!ui.autoPass || s.decision || s.gameOver) return;
     const prompt = s.prompt || {};
-    const selectable = (prompt.selectable || []).length + (prompt.players || []).length;
-    const message = prompt.message || "";
-    if (!prompt.okEnabled || selectable > 0) return;
-    if (!/pass priority/i.test(message)) return;
-    const sig = message + "|" + (s.phase || "") + "|" + (s.priorityPlayer || "");
+    if (buttonLabels(prompt, s).kind !== "priority" || !prompt.okEnabled) return;
+    if ((prompt.selectable || []).length || (prompt.players || []).length) return;
+    const sig = (prompt.message || "") + "|" + (s.phase || "") + "|" + (s.priorityPlayer || "") + "|" + (prompt.weak || []).join(",");
     if (sig === ui.lastAuto) return;
     ui.lastAuto = sig;
     setTimeout(() => send({ action: "ok" }), 350);
+  }
+
+  function maybeAutoMana(s) {
+    if (s.decision || s.gameOver) return;
+    const prompt = s.prompt || {};
+    if (buttonLabels(prompt, s).kind !== "mana" || !prompt.okEnabled) return;
+    const sig = "mana|" + (prompt.message || "") + "|" + (s.phase || "") + "|" + (prompt.weak || []).join(",");
+    if (sig === ui.lastMana) return;
+    ui.lastMana = sig;
+    setTimeout(() => {
+      const now = stateBody();
+      if (!now || now.decision || now.gameOver) return;
+      const again = now.prompt || {};
+      const next = "mana|" + (again.message || "") + "|" + (now.phase || "") + "|" + (again.weak || []).join(",");
+      if (next === sig && again.okEnabled && buttonLabels(again, now).kind === "mana") {
+        send({ action: "ok" });
+      }
+    }, 400);
   }
 
   function send(message) {

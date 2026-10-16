@@ -36,6 +36,15 @@ public final class ForgeBoot {
                 prefs.setPref(FPref.UI_ENABLE_SOUNDS, false);
                 prefs.setPref(FPref.UI_ENABLE_MUSIC, false);
                 prefs.setPref(FPref.MATCH_AI_SIDEBOARDING_MODE, "Off");
+                // Glow legal cards, and pass priority on an empty step (upkeep, draw, and
+                // the opponent's turn) unless this player can actually respond. Lands stay
+                // illegal in the draw step, so that step passes itself and stops in main.
+                prefs.setPref(FPref.UI_SHOW_ACTIONABLE_HIGHLIGHTS, true);
+                prefs.setPref(FPref.UI_SHOW_AUTOTAP_PREVIEW, true);
+                prefs.setPref(FPref.YIELD_AUTO_PASS_NO_ACTIONS, true);
+                prefs.setPref(FPref.YIELD_SKIP_PHASE_DELAY, true);
+                prefs.setPref(FPref.YIELD_SKIP_RESOLVE_DELAY, true);
+                prefs.setPref(FPref.YIELD_AVAILABLE_ACTIONS_BUDGET_MS, "1500");
                 return null;
             });
             ready = true;

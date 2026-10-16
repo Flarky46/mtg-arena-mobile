@@ -1,4 +1,4 @@
-const CACHE = "tabletop-shell-1";
+const CACHE = "tabletop-shell-2";
 const SHELL = ["/", "/index.html", "/styles.css", "/app.js", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
