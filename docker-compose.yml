@@ -1,0 +1,14 @@
+services:
+  tabletop:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      HOME: /data
+      DATA_DIR: /data
+    volumes:
+      - tabletop-data:/data
+    restart: unless-stopped
+
+volumes:
+  tabletop-data:

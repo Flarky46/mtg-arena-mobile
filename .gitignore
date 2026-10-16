@@ -1,0 +1,5 @@
+/data/
+/server/target/
+*.log
+.idea/
+.DS_Store
