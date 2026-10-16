@@ -1,0 +1,22 @@
+Tabletop
+Copyright (C) 2026 the Tabletop contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+The rules engine is Forge (Card-Forge/forge), Copyright (C) 2011 Forge
+Team and contributors, also licensed under the GNU General Public
+License, version 3. This project pins Forge commit
+733a221e35613ec146ae4573df5406661c71c6f3 (version 2.0.16-SNAPSHOT).
+Forge is not vendored in this repository. Docker clones that commit
+when the image is built. Source: https://github.com/Card-Forge/forge
+
+Card images are not included. The app asks Scryfall for them when a
+card is shown. Scryfall's artwork is used under their API guidelines
+and is not redistributed here. https://scryfall.com/docs/api
+
+Deck links are read from Moxfield's public deck endpoint when the
+CDN allows it. Deck lists you paste stay in the data folder on the
+machine that hosts the app.

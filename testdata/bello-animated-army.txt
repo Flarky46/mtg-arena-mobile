@@ -1,0 +1,111 @@
+# Exported from the public Moxfield deck
+# https://moxfield.com/decks/uf2fz274EUS6kSQrMRI3MQ
+# Animated Army Precon upgraded
+
+Commander
+1 Bello, Bard of the Brambles
+
+Deck
+7 Mountain
+10 Forest
+1 Temple of Abandon
+1 Arcane Signet
+1 Command Tower
+1 Forgotten Cave
+1 Tranquil Thicket
+1 Beast Within
+1 Beastmaster Ascension
+1 Chaos Warp
+1 Cultivate
+1 Evolving Wilds
+1 Farseek
+1 Gruul Signet
+1 Harmonize
+1 Rampant Growth
+1 Sakura-Tribe Elder
+1 Shamanic Revelation
+1 Thought Vessel
+1 Thran Dynamo
+1 Garruk's Uprising
+1 Fellwar Stone
+1 Blasphemous Act
+1 Exotic Orchard
+1 Spine of Ish Sah
+1 Terramorphic Expanse
+1 Warstorm Surge
+1 Path of Ancestry
+1 Cinder Glade
+1 Gruul Turf
+1 Karplusan Forest
+1 Nature's Will
+1 Gilded Lotus
+1 Mosswort Bridge
+1 Grothama, All-Devouring
+1 Greater Good
+1 Game Trail
+1 Raging Ravine
+1 Abrade
+1 Gruul War Chant
+1 Wooded Foothills
+1 Eidolon of Blossoms
+1 Copperline Gorge
+1 Rootbound Crag
+1 Domri, Anarch of Bolas
+1 Mossfire Valley
+1 Outpost Siege
+1 Sheltered Thicket
+1 Decimate
+1 Sylvan Caryatid
+1 Curse of Marit Lage
+1 Primeval Bounty
+1 Gratuitous Violence
+1 Berserkers' Onslaught
+1 Sight of the Scalelords
+1 Path of Discovery
+1 Tendershoot Dryad
+1 Goreclaw, Terror of Qal Sisma
+1 Sunbird's Invocation
+1 Kodama of the East Tree
+1 Esika's Chariot
+1 Yavimaya, Cradle of Growth
+1 Sanctum Weaver
+1 Unnatural Growth
+1 Glorious Sunrise
+1 Bootleggers' Stash
+1 Rain of Riches
+1 Wooded Ridgeline
+1 Isengard Unleashed
+1 Gimli's Reckless Might
+1 Chimil, the Inner Sun
+1 Case of the Locked Hothouse
+1 Wandertale Mentor
+1 Teapot Slinger
+1 Wildsear, Scouring Maw
+1 Trailtracker Scout
+1 Pyreswipe Hawk
+1 Alchemist's Talent
+1 Prosperous Bandit
+1 Brightcap Badger // Fungus Frolic
+1 Thickest in the Thicket
+1 Rolling Hamsphere
+1 Lumbering Worldwagon
+1 The Earth King
+
+Sideboard
+1 Grumgully, the Generous
+1 Burnished Hart
+1 Explore
+1 Mind Stone
+1 Reliquary Tower
+1 Sol Ring
+1 Ghalta, Primal Hunger
+1 Starstorm
+1 Garruk's Packleader
+1 Hedron Archive
+1 Rampaging Baloths
+1 Lotus Cobra
+1 Etali, Primal Storm
+1 Talisman of Impulse
+1 Big Score
+1 Llanowar Loamspeaker
+1 Evercoat Ursine
